@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">MediaFormalDemo</string>
+    <string name="useCamera">使用摄像头预览</string>
+    <string name="local">选择本地视频文件预览</string>
+    <string name="startRecoder">开始录制</string>
+    <string name="stopRecoder">结束录制</string>
+</resources>
