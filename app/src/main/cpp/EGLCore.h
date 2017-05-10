@@ -9,14 +9,21 @@
 #include <jni.h>
 #include <string>
 
+enum class EGLCoreSurfaceOrder{
+    EGLCoreSurfaceOrderFirst,
+    EGLCoreSurfaceOrderSecond
+};
+
 class EGLCore {
 public:
     EGLCore(JNIEnv* env, jobject surface, EGLContext sharedContext = nullptr, bool recordable = true);
     EGLCore(int width, int height, EGLContext sharedContext = nullptr, bool recordable = true);
     virtual ~EGLCore();
-    void makeCurrent();
+    void makeCurrent(EGLCoreSurfaceOrder order = EGLCoreSurfaceOrder::EGLCoreSurfaceOrderFirst);
     void makeNothingCurrent();
-    EGLBoolean swapBuffers();
+    EGLBoolean swapBuffers(EGLCoreSurfaceOrder order = EGLCoreSurfaceOrder::EGLCoreSurfaceOrderFirst);
+    void setupSecondSurface(JNIEnv* env,jobject surface);
+
     EGLSurface createWindowSurface(JNIEnv* env,jobject surface);
     void bindCurrent(EGLSurface surface);
     EGLDisplay mEGLDisplay ;
@@ -25,6 +32,7 @@ private:
     EGLContext mEGLContext ;
     EGLConfig mEGLConfig ;
     EGLSurface mEGLSurface;
+    EGLSurface mSecondEGLSurface;
     int mGlVersion ;
     EGLConfig getConfig(bool recordable, int version);
     void createEGLContext(EGLContext sharedContext, bool recordable);

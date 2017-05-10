@@ -9,13 +9,15 @@
 
 #define DePrint(...) do{__android_log_print(ANDROID_LOG_ERROR, "Demon_jni", __VA_ARGS__);}while(0)
 
-EGLCore::EGLCore(JNIEnv* env, jobject surface, EGLContext sharedContext, bool recordable)
+EGLCore::EGLCore(JNIEnv* env, jobject surface, EGLContext sharedContext, bool recordable):
+        mSecondEGLSurface(EGL_NO_SURFACE)
 {
     createEGLContext(sharedContext, recordable);
     mEGLSurface = createWindowSurface(env, surface);
 }
 
-EGLCore::EGLCore(int width, int height, EGLContext sharedContext , bool recordable)
+EGLCore::EGLCore(int width, int height, EGLContext sharedContext , bool recordable):
+        mSecondEGLSurface(EGL_NO_SURFACE)
 {
     createEGLContext(sharedContext, recordable);
     mEGLSurface = createOffscreenSurface(width, height);
@@ -129,7 +131,14 @@ EGLCore::~EGLCore()
         eglReleaseThread();
         eglTerminate(mEGLDisplay);
     }
-
+    if (mEGLSurface != EGL_NO_SURFACE)
+    {
+        releaseSurface(mEGLSurface);
+    }
+    if (mSecondEGLSurface != EGL_NO_SURFACE)
+    {
+        releaseSurface(mSecondEGLSurface);
+    }
     mEGLDisplay = EGL_NO_DISPLAY;
     mEGLContext = EGL_NO_CONTEXT;
     mEGLConfig = nullptr;
@@ -157,13 +166,16 @@ EGLSurface EGLCore::createOffscreenSurface(int width, int height)
     return eglSurface;
 }
 
-void EGLCore::makeCurrent()
+void EGLCore::makeCurrent(EGLCoreSurfaceOrder order)
 {
     if (mEGLDisplay == EGL_NO_DISPLAY)
     {
         DePrint("NOTE: makeCurrent w/o display");
     }
-    if (!eglMakeCurrent(mEGLDisplay, mEGLSurface, mEGLSurface, mEGLContext))
+
+    EGLSurface surface = order == EGLCoreSurfaceOrder ::EGLCoreSurfaceOrderFirst ? mEGLSurface : mSecondEGLSurface;
+
+    if (!eglMakeCurrent(mEGLDisplay, surface, surface, mEGLContext))
     {
         DePrint("eglMakeCurrent failed");
         return;
@@ -190,9 +202,10 @@ void EGLCore::makeNothingCurrent()
     }
 }
 
-EGLBoolean EGLCore::swapBuffers()
+EGLBoolean EGLCore::swapBuffers(EGLCoreSurfaceOrder order)
 {
-    EGLBoolean swapBufferResult = eglSwapBuffers(mEGLDisplay, mEGLSurface);
+    EGLSurface surface = order == EGLCoreSurfaceOrder::EGLCoreSurfaceOrderFirst ? mEGLSurface : mSecondEGLSurface;
+    EGLBoolean swapBufferResult = eglSwapBuffers(mEGLDisplay, surface);
     DePrint("swapBufferResult:成功");
     return swapBufferResult;
 }
@@ -242,6 +255,10 @@ EGLSurface EGLCore::createWindowSurface(JNIEnv *env, jobject surface)
     }
     DePrint("is here ? 4 success");
     return eglSurface;
+}
+
+void EGLCore::setupSecondSurface(JNIEnv *env, jobject surface) {
+    mSecondEGLSurface = createWindowSurface(env, surface);
 }
 
 

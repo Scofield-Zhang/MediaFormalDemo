@@ -22,6 +22,7 @@ package zhang.alex.com.mediaformaldemo.encoder;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
+import android.annotation.SuppressLint;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
@@ -54,6 +55,7 @@ public class MediaMuxerWrapper {
 	 * @param ext extension of output file
 	 * @throws IOException
 	 */
+	@SuppressLint("WrongConstant")
 	public MediaMuxerWrapper(String ext) throws IOException {
 		if (TextUtils.isEmpty(ext)) ext = ".mp4";
 		try {
@@ -197,5 +199,4 @@ public class MediaMuxerWrapper {
     	final GregorianCalendar now = new GregorianCalendar();
     	return mDateTimeFormat.format(now.getTime());
     }
-
 }

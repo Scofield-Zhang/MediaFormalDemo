@@ -1,5 +1,26 @@
 package zhang.alex.com.mediaformaldemo.encoder;
-
+/*
+ * AudioVideoRecordingSample
+ * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
+ *
+ * Copyright (c) 2014-2015 saki t_saki@serenegiant.com
+ *
+ * File name: MediaEncoder.java
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ * All files in the folder are under this Apache License, Version 2.0.
+*/
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -17,20 +38,19 @@ public abstract class MediaEncoder implements Runnable {
 	protected static final int MSG_FRAME_AVAILABLE = 1;
 	protected static final int MSG_STOP_RECORDING = 9;
 
+
 	public interface MediaEncoderListener {
-		void onPrepared(MediaEncoder encoder);
-		void onStopped(MediaEncoder encoder);
+		public void onPrepared(MediaEncoder encoder);
+		public void onStopped(MediaEncoder encoder);
 	}
 
 	protected final Object mSync = new Object();
 	/**
 	 * Flag that indicate this encoder is capturing now.
-	 * 这个标志标明是否现在捕捉
 	 */
     protected volatile boolean mIsCapturing;
 	/**
 	 * Flag that indicate the frame data will be available soon.
-	 *
 	 */
 	private int mRequestDrain;
     /**
@@ -56,13 +76,13 @@ public abstract class MediaEncoder implements Runnable {
     /**
      * Weak refarence of MediaMuxerWarapper instance
      */
-    protected  WeakReference<MediaMuxerWrapper> mWeakMuxer;
+    protected final WeakReference<MediaMuxerWrapper> mWeakMuxer;
     /**
      * BufferInfo instance for dequeuing
      */
     private MediaCodec.BufferInfo mBufferInfo;		// API >= 16(Android4.1.2)
 
-    protected  MediaEncoderListener mListener;
+    protected final MediaEncoderListener mListener;
 
     public MediaEncoder(final MediaMuxerWrapper muxer, final MediaEncoderListener listener) {
     	if (listener == null) throw new NullPointerException("MediaEncoderListener is null");
@@ -82,18 +102,14 @@ public abstract class MediaEncoder implements Runnable {
         }
 	}
 
-	public MediaEncoder() {
-	}
-
-	public String getOutputPath() {
+    public String getOutputPath() {
     	final MediaMuxerWrapper muxer = mWeakMuxer.get();
     	return muxer != null ? muxer.getOutputPath() : null;
     }
 
     /**
      * the method to indicate frame data is soon available or already available
-	 * 指示帧数据的方法即将可用或已经可用
-     * @return return true if encoder is ready to encode.
+     * @return return true if encoder is ready to encod.
      */
     public boolean frameAvailableSoon() {
 //    	if (DEBUG) Log.v(TAG, "frameAvailableSoon");
@@ -128,7 +144,6 @@ public abstract class MediaEncoder implements Runnable {
         		if (localRequestDrain)
         			mRequestDrain--;
         	}
-        	// 本地请求结束
 	        if (localRequestStop) {
 	           	drain();
 	           	// request stop recording
@@ -247,12 +262,13 @@ public abstract class MediaEncoder implements Runnable {
 	        if (inputBufferIndex >= 0) {
 	            final ByteBuffer inputBuffer = inputBuffers[inputBufferIndex];
 	            inputBuffer.clear();
-				if (buffer != null) {
+	            if (buffer != null) {
 	            	inputBuffer.put(buffer);
 	            }
+//	            if (DEBUG) Log.v(TAG, "encode:queueInputBuffer");
 	            if (length <= 0) {
 	            	// send EOS
-					mIsEOS = true;
+	            	mIsEOS = true;
 	            	if (DEBUG) Log.i(TAG, "send BUFFER_FLAG_END_OF_STREAM");
 	            	mMediaCodec.queueInputBuffer(inputBufferIndex, 0, 0,
 	            		presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
@@ -374,8 +390,11 @@ LOOP:	while (mIsCapturing) {
 		long result = System.nanoTime() / 1000L;
 		// presentationTimeUs should be monotonic
 		// otherwise muxer fail to write
-		if (result < prevOutputPTSUs)
-			result = (prevOutputPTSUs - result) + result;
+		if (result < prevOutputPTSUs) {
+			result = prevOutputPTSUs ;
+		}
+		Log.d("timestamp", "getPTSUs: "+result+"    prevOutputPTSUs时间："+prevOutputPTSUs+"    result :"
+				+result+"\n 时间戳差："+(prevOutputPTSUs-result));
 		return result;
     }
 }

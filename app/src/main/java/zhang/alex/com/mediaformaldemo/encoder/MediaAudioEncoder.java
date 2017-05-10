@@ -22,6 +22,7 @@ package zhang.alex.com.mediaformaldemo.encoder;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
+import android.annotation.SuppressLint;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
@@ -32,7 +33,6 @@ import android.media.MediaRecorder;
 import android.util.Log;
 
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 public class MediaAudioEncoder extends MediaEncoder {
@@ -40,10 +40,10 @@ public class MediaAudioEncoder extends MediaEncoder {
 	private static final String TAG = "MediaAudioEncoder";
 
 	private static final String MIME_TYPE = "audio/mp4a-latm";
-    private static final int SAMPLE_RATE = 22050;	// 44.1[KHz] is only setting guaranteed to be available on all devices.
+    private static final int SAMPLE_RATE = 44100;	// 44.1[KHz] is only setting guaranteed to be available on all devices.
     private static final int BIT_RATE = 64000;
 	public static final int SAMPLES_PER_FRAME = 1024;	// AAC, bytes/frame/channel
-	public static final int FRAMES_PER_BUFFER = 30; 	// AAC, frame/buffer/sec TODO 25S
+	public static final int FRAMES_PER_BUFFER = 25; 	// AAC, frame/buffer/sec
 
     private AudioThread mAudioThread = null;
 
@@ -51,6 +51,7 @@ public class MediaAudioEncoder extends MediaEncoder {
 		super(muxer, listener);
 	}
 
+	@SuppressLint("WrongConstant")
 	@Override
 	protected void prepare() throws IOException {
 		if (DEBUG) Log.v(TAG, "prepare:");
@@ -114,8 +115,7 @@ public class MediaAudioEncoder extends MediaEncoder {
 	 * and write them to the MediaCodec encoder
 	 */
     private class AudioThread extends Thread {
-
-		@Override
+    	@Override
     	public void run() {
     		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
     		try {
@@ -129,8 +129,9 @@ public class MediaAudioEncoder extends MediaEncoder {
 				AudioRecord audioRecord = null;
 				for (final int source : AUDIO_SOURCES) {
 					try {
-						audioRecord = new AudioRecord(source, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
-								AudioFormat.ENCODING_PCM_16BIT, buffer_size);
+						audioRecord = new AudioRecord(
+							source, SAMPLE_RATE,
+							AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, buffer_size);
 	    	            if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED)
 	    	            	audioRecord = null;
 					} catch (final Exception e) {
@@ -149,13 +150,15 @@ public class MediaAudioEncoder extends MediaEncoder {
 					    		for (; mIsCapturing && !mRequestStop && !mIsEOS ;) {
 					    			// read audio data from internal mic
 									buf.clear();
-									readBytes = audioRecord.read(buf, SAMPLES_PER_FRAME);
+					    			readBytes = audioRecord.read(buf, SAMPLES_PER_FRAME);
 					    			if (readBytes > 0) {
-										Buffer position = buf.position(readBytes);
+					    			    // set audio data to encoder
+										buf.position(readBytes);
 										buf.flip();
 					    				encode(buf, readBytes, getPTSUs());
+										// encode(buf, readBytes, setTimeStamp());
 					    				frameAvailableSoon();
-									}
+					    			}
 					    		}
 			    				frameAvailableSoon();
 			                } finally {
@@ -173,10 +176,15 @@ public class MediaAudioEncoder extends MediaEncoder {
     		}
 			if (DEBUG) Log.v(TAG, "AudioThread:finished");
     	}
-    }
 
+	}
 
-	private static final MediaCodecInfo selectAudioCodec(final String mimeType) {
+    /**
+     * select the first codec that match a specific MIME type
+     * @param mimeType
+     * @return
+     */
+    private static final MediaCodecInfo selectAudioCodec(final String mimeType) {
     	if (DEBUG) Log.v(TAG, "selectAudioCodec:");
 
     	MediaCodecInfo result = null;
@@ -200,4 +208,5 @@ LOOP:	for (int i = 0; i < numCodecs; i++) {
         }
    		return result;
     }
+
 }

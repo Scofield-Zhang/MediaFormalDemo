@@ -66,7 +66,6 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
     private void init() {
         getHolder().addCallback(this);
-
     }
 
     @Override
@@ -87,9 +86,12 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // TODO 这里 为null
         videoEncoder = new MediaVideoEncoder(mMuxer,this,VIDEO_WIDTH,VIDEO_HEIGHT);
-       // createWindowsSurfaceFromJNI(videoEncoder.getSurface());
+        try {
+            mMuxer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Log.d("Demon_jni", "videoEncoder: ");
         mCamera.startPreview();
     }
@@ -113,8 +115,7 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
         drawTexture();
         swapBuffer();
         makeCurrentGLSurface();
-        // TODO
-         videoEncoder.frameAvailableSoon();
+        videoEncoder.frameAvailableSoon();
         setPresentationTime(cameraSurfaceTexture.getTimestamp());
         swapBufferGLSurface();
         Log.d("onFrameAvailable", "onFrameAvailable: ");
@@ -169,11 +170,11 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
     @Override
     public void onPrepared(MediaEncoder encoder) {
         if (encoder instanceof MediaVideoEncoder){
+            Log.d("onPrepared", "onPrepared: ");
             videoEncoder = (MediaVideoEncoder) encoder;
-            Log.d("Demon_jni", "执行到这里吗: ");
-
-            Log.d("Demon_jni", "执行到这里: ");
-
+            Surface surface = videoEncoder.getSurface();
+            createWindowsSurfaceFromJNI(surface);
+            Log.d("onPrepared", "onPrepared: ->2");
         }
     }
 
@@ -182,19 +183,25 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
     }
     public void startRecording() {
+
         try {
-//            mMuxer = new MediaMuxerWrapper(".mp4");
-//            if (true) {
-//                new MediaVideoEncoder(mMuxer, this, MySurfaceView.VIDEO_WIDTH, MySurfaceView.VIDEO_HEIGHT);
-//            }
+            mMuxer = new MediaMuxerWrapper(".mp4");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (true) {
+                new MediaVideoEncoder(mMuxer, this, MySurfaceView.VIDEO_WIDTH, MySurfaceView.VIDEO_HEIGHT);
+            }
             if (true) {
                 new MediaAudioEncoder(mMuxer, this);
             }
+        try {
             mMuxer.prepare();
-            mMuxer.startRecording();
-        } catch (final IOException e) {
-
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        mMuxer.startRecording();
+
     }
     public void stopRecording() {
         if (mMuxer != null) {

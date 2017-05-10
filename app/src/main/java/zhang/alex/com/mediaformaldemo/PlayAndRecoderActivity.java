@@ -6,14 +6,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-import zhang.alex.com.mediaformaldemo.encoder.MediaMuxerWrapper;
-
 public class PlayAndRecoderActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Button btnRecoder;
     private boolean isRecording;
     private MySurfaceView mySurfaceView;
-    private MediaMuxerWrapper mMuxer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +22,6 @@ public class PlayAndRecoderActivity extends AppCompatActivity implements View.On
     private void initView() {
         btnRecoder = (Button) findViewById(R.id.recoder);
         mySurfaceView = (MySurfaceView) findViewById(R.id.msf);
-
         btnRecoder.setOnClickListener(this);
     }
 
@@ -33,13 +29,10 @@ public class PlayAndRecoderActivity extends AppCompatActivity implements View.On
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.recoder:
-                if (mMuxer!= null) {
+                if (isRecording) {
                     mySurfaceView.startRecording();
-                    isRecording = false;
-                }
-                else{
+                }else {
                     mySurfaceView.stopRecording();
-                    isRecording =true;
                 }
                 updateControl();
                 break;

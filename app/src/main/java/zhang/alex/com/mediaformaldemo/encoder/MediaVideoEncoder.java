@@ -22,6 +22,7 @@ package zhang.alex.com.mediaformaldemo.encoder;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
+import android.annotation.SuppressLint;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -40,12 +41,10 @@ public class MediaVideoEncoder extends MediaEncoder {
     private static final int FRAME_RATE = 30;
     private static final float BPP = 0.25f;
 
-    private  int mWidth;
-    private  int mHeight;
+    private final int mWidth;
+    private final int mHeight;
 //    private RenderHandler mRenderHandler;
-    private Surface mSurface;
-
-
+	private Surface mSurface;
 
 	public Surface getSurface() {
 		return mSurface;
@@ -59,26 +58,31 @@ public class MediaVideoEncoder extends MediaEncoder {
 //		mRenderHandler = RenderHandler.createHandler(TAG);
 	}
 
-
 	public boolean frameAvailableSoon(final float[] tex_matrix) {
-		boolean result;
-		if (result = super.frameAvailableSoon()){}
+//		boolean result;
+//		if (result = )
 //			mRenderHandler.draw(tex_matrix);
-		return result;
+		return super.frameAvailableSoon();
 	}
 
 	public boolean frameAvailableSoon(final float[] tex_matrix, final float[] mvp_matrix) {
 		boolean result;
-		if (result = super.frameAvailableSoon()){}
+		if (result = super.frameAvailableSoon()){
+
+		}
 //			mRenderHandler.draw(tex_matrix, mvp_matrix);
 		return result;
 	}
 
 	@Override
 	public boolean frameAvailableSoon() {
-		return  super.frameAvailableSoon();
+		boolean result;
+		if (result = super.frameAvailableSoon()){}
+//			mRenderHandler.draw(null);
+		return result;
 	}
 
+	@SuppressLint("WrongConstant")
 	@Override
 	protected void prepare() throws IOException {
 		if (DEBUG) Log.i(TAG, "prepare: ");
@@ -104,7 +108,6 @@ public class MediaVideoEncoder extends MediaEncoder {
         // get Surface for encoder input
         // this method only can call between #configure and #start
         mSurface = mMediaCodec.createInputSurface();	// API >= 18
-
         mMediaCodec.start();
         if (DEBUG) Log.i(TAG, "prepare finishing");
         if (mListener != null) {
@@ -152,7 +155,6 @@ public class MediaVideoEncoder extends MediaEncoder {
         final int numCodecs = MediaCodecList.getCodecCount();
         for (int i = 0; i < numCodecs; i++) {
         	final MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
-
             if (!codecInfo.isEncoder()) {	// skipp decoder
                 continue;
             }
